@@ -1,89 +1,196 @@
-# 3D Globe Annotation App
+# GeoSpatial Annotations API
 
-An interactive 3D globe application with annotation tools built using React, MapboxGL, and Fabric.js.
+A FastAPI backend application that provides a comprehensive API for storing and retrieving various types of geospatial annotations.
 
 ## Features
 
-- **3D Interactive Globe**: Visualize the Earth in 3D with terrain and atmosphere effects
-- **Rich Annotation Tools**: Add markers, text notes, and hyperlinks to the map
-- **Interactive Canvas**: Annotations can be moved, edited, and styled
-- **Transparent Canvas Overlay**: Fabric.js canvas sits on top of the map with a transparent background
-- **State Management**: Zustand for lightweight state management of annotations
+- **Spatial Data Management**: Store and query geospatial data with PostgreSQL/PostGIS
+- **Multiple Annotation Types**:
+  - **Basic Items**: Simple points with name and description
+  - **Annotations**: General purpose annotations with JSON content
+  - **Note Annotations**: Text notes attached to locations
+  - **Link Annotations**: Clickable hyperlinks on the map
+  - **Image Annotations**: Images attached to locations with S3 storage
 
 ## Tech Stack
 
-- **Frontend Framework**: React + TypeScript + Vite
-- **Map Visualization**: MapboxGL JS for 3D globe rendering
-- **Annotations**: Fabric.js for interactive canvas-based annotations
-- **Styling**: Tailwind CSS for utility-first styling
-- **State Management**: Zustand for state management
+- **Backend**: FastAPI & Python 3.8+
+- **Database**: PostgreSQL with PostGIS extension
+- **ORM**: SQLAlchemy with GeoAlchemy2
+- **Media Storage**: AWS S3 for image uploads
+- **Migration**: Alembic
 
-## Getting Started
+## Installation
 
 ### Prerequisites
 
-- Node.js and npm installed
-- MapboxGL access token (sign up at [mapbox.com](https://www.mapbox.com/))
+- Python 3.8+
+- PostgreSQL with PostGIS extension
+- AWS account (for S3 image storage)
 
-### Installation
+### Setup
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/globe-annotation-app.git
-   cd globe-annotation-app
+   git clone https://github.com/yourusername/geospatial-annotations-api.git
+   cd geospatial-annotations-api
    ```
 
-2. Install dependencies:
+2. Create and activate a virtual environment:
    ```bash
-   npm install
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-3. Add your MapboxGL token:
-   Edit `src/components/GlobeMap.tsx` and replace `YOUR_MAPBOX_TOKEN` with your actual token.
-
-4. Start the development server:
+3. Install dependencies:
    ```bash
-   npm run dev
+   pip install -r requirements.txt
    ```
 
-5. Open your browser and navigate to `http://localhost:5173` (or the URL shown in your terminal).
+4. Set up environment variables:
+   Create a `.env` file in the project root with:
+   ```
+   DATABASE_URL=postgresql+asyncpg://user:password@localhost/db_name
+   AWS_ACCESS_KEY_ID=your_access_key
+   AWS_SECRET_ACCESS_KEY=your_secret_key
+   S3_BUCKET_NAME=your_bucket_name
+   AWS_REGION=us-east-1
+   ```
 
-## Usage
+5. Run migrations:
+   ```bash
+   alembic upgrade head
+   ```
 
-- **Navigate the Globe**: Drag to rotate, scroll to zoom, shift+drag to tilt
-- **Add Annotations**: Use the annotation toolbar to add different types of annotations
-- **Edit Annotations**: Click on an annotation to select and edit it, drag to move
-- **Style Annotations**: Edit text, change colors, and adjust sizes of annotations
+6. Start the server:
+   ```bash
+   uvicorn main:app --reload
+   ```
 
-## Project Structure
+## API Endpoints
 
+### Basic Items
+- `GET /api/items/` - Get all items
+- `POST /api/items/` - Create new item
+
+### Annotations
+- `GET /api/annotations/` - Get all annotations
+- `POST /api/annotations/` - Create new annotation
+- `GET /api/annotations/user/{user_id}` - Get user's annotations
+
+### Note Annotations
+- `GET /api/note_annotations/` - Get all note annotations
+- `POST /api/note_annotations/` - Create new note annotation
+- `GET /api/note_annotations/user/{user_id}` - Get user's note annotations
+
+### Link Annotations
+- `GET /api/link_annotations/` - Get all link annotations
+- `POST /api/link_annotations/` - Create new link annotation
+- `GET /api/link_annotations/user/{user_id}` - Get user's link annotations
+
+### Image Annotations
+- `GET /api/image_annotations/` - Get all image annotations
+- `POST /api/image_annotations/` - Upload image and create new image annotation
+- `GET /api/image_annotations/user/{user_id}` - Get user's image annotations
+
+## API Usage Examples
+
+### Create a Simple Item
+```json
+POST /api/items/
+{
+  "name": "Sample Point",
+  "description": "This is a sample point on the map",
+  "geom": "POINT(30.123 45.678)"
+}
 ```
-/
-├── src/
-│   ├── components/
-│   │   ├── GlobeMap.tsx      # Main 3D globe map component
-│   │   └── AnnotationTools.tsx # Annotation controls component
-│   ├── store/
-│   │   └── annotationStore.ts # Zustand state store for annotations
-│   ├── App.tsx               # Main application component
-│   └── main.tsx              # Application entry point
-├── public/                   # Static assets
-└── ...configuration files
+
+### Create an Annotation
+```json
+POST /api/annotations/
+{
+  "user_id": "user123",
+  "type": "point",
+  "geometry": "POINT(30.123 45.678)",
+  "content": {
+    "title": "Test Annotation",
+    "description": "This is a test point annotation"
+  }
+}
 ```
 
-## Customizing
+### Create a Note Annotation
+```json
+POST /api/note_annotations/
+{
+  "user_id": "user123",
+  "text": "This is a test note",
+  "geometry": "POINT(30.123 45.678)",
+  "style": {
+    "background": "blue",
+    "shape": "circle"
+  }
+}
+```
 
-- **Map Style**: Change the MapboxGL style in `GlobeMap.tsx` for different map appearances
-- **Annotation Styles**: Modify Fabric.js options in the annotation creation functions
-- **UI**: The interface uses Tailwind CSS classes for easy customization
+### Create a Link Annotation
+```json
+POST /api/link_annotations/
+{
+  "user_id": "user123",
+  "name": "Important Resource",
+  "description": "Link to documentation",
+  "geometry": "POINT(30.123 45.678)",
+  "content": {
+    "url": "https://example.com/docs"
+  },
+  "fabric_json": {
+    "style": {
+      "color": "blue",
+      "icon": "link"
+    }
+  }
+}
+```
 
-## License
+### Create an Image Annotation
+```
+POST /api/image_annotations/
+Content-Type: multipart/form-data
 
-MIT
+user_id: user123
+title: Beautiful Mountain
+description: Mountain view from my hike
+geometry: POINT(30.123 45.678)
+file: [image file]
+```
 
-## Acknowledgements
+## Database Schema
 
-- [MapboxGL JS](https://docs.mapbox.com/mapbox-gl-js/api/)
-- [Fabric.js](http://fabricjs.com/)
-- [React](https://react.dev/)
-- [Zustand](https://github.com/pmndrs/zustand)
+The application uses PostgreSQL with the PostGIS extension for spatial data. The main tables are:
+
+- `items` - Basic points on the map
+- `annotations` - General purpose annotations
+- `note_annotations` - Text notes attached to locations
+- `link_annotations` - Clickable hyperlinks on the map
+- `image_annotations` - Images attached to locations
+
+## Development
+
+### Adding New Features
+
+To add a new annotation type:
+
+1. Create a model in `app/models.py`
+2. Add schemas in `app/schemas.py`
+3. Add CRUD functions in `app/crud.py`
+4. Create a router in `app/routers/`
+5. Register the router in `app/main.py`
+
+## Troubleshooting
+
+### Common Issues
+
+- **Geometry Format**: Ensure all geometry data is in proper WKT format (e.g., "POINT(longitude latitude)")
+- **Binary Geometry Data**: When retrieving geometry data, make sure to convert EWKB to WKT format to avoid Unicode errors
+- **AWS Credentials**: For image uploads, verify that AWS credentials are properly set 
